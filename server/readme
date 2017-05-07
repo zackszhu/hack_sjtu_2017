@@ -1,0 +1,2 @@
+We used the Django framework to build up our website.
+To protect out database, sensitive information is modified such as the username and password of MongoDB.
