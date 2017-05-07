@@ -50,7 +50,6 @@
         <activity
             android:name=".MeActivity"
             android:label="@string/title_me"></activity>
-        <activity android:name=".RegisterActivity"></activity>
     </application>
 
 </manifest>

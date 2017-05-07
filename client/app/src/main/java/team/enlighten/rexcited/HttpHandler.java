@@ -218,8 +218,14 @@ public class HttpHandler {
 
         JSONObject overviewJson = jsonObject.getJSONObject("msg");
         int time = overviewJson.getInt("article_task_times");
-        JSONObject scoreJson = overviewJson.getJSONObject("article_total_score");
-        score.InitFromJSON(scoreJson);
+        if (time != 0) {
+            JSONObject scoreJson = overviewJson.getJSONObject("article_total_score");
+            score.InitFromJSON(scoreJson);
+        } else {
+            score.Accuracy = 0;
+            score.Fluency = 0;
+            score.Score = 0;
+        }
         return time;
     }
 }

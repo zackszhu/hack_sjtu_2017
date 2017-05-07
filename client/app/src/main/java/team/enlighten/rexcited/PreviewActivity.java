@@ -2,12 +2,14 @@ package team.enlighten.rexcited;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import team.enlighten.rexcited.article.Article;
 
@@ -34,10 +36,21 @@ public class PreviewActivity extends AppCompatActivity {
         contentView = (TextView) findViewById(R.id.preview_content);
 
         final String id = getIntent().getStringExtra("article");
+        final Handler handler = new Handler();
         new Thread(new Runnable() {
             @Override
             public void run() {
-                FileManager.getInstance().fetchArticle();
+                try {
+                    FileManager.getInstance().fetchArticle();
+                } catch (final Exception e) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    return;
+                }
                 for (Article article : FileManager.getInstance().articles) {
                     if (article.id.equals(id)) {
                         PreviewActivity.this.article = article;
@@ -45,7 +58,7 @@ public class PreviewActivity extends AppCompatActivity {
                     }
                 }
 
-                titleView.post(new Runnable() {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         titleView.setText(article.Title);

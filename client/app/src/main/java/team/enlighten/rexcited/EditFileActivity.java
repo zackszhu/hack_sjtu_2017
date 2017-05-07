@@ -1,6 +1,7 @@
 package team.enlighten.rexcited;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -40,12 +41,13 @@ public class EditFileActivity extends AppCompatActivity {
             public void onClick(View v) {
                 btnSave.setEnabled(false);
                 final Article article = new TextParser().Parse("# " + title.getText().toString() + "\n" + content.getText().toString());
+                final Handler handler = new Handler();
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
                         try {
                             FileManager.getInstance().postArticle(article, TextParser.EArticleType.Article, TextParser.EArticlePerm.Public);
-                            btnSave.post(new Runnable() {
+                            handler.post(new Runnable() {
                                 @Override
                                 public void run() {
                                     Toast.makeText(getApplicationContext(), "Upload success", Toast.LENGTH_SHORT).show();
@@ -53,7 +55,7 @@ public class EditFileActivity extends AppCompatActivity {
                                 }
                             });
                         } catch (Exception e) {
-                            btnSave.post(new Runnable() {
+                            handler.post(new Runnable() {
                                 @Override
                                 public void run() {
                                     btnSave.setEnabled(true);

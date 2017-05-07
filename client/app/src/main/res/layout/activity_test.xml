@@ -18,6 +18,16 @@
         app:layout_constraintRight_toRightOf="parent">
 
         <android.support.design.widget.FloatingActionButton
+            android:id="@+id/btn_stop"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="true"
+            android:src="@drawable/ic_stop"
+            android:visibility="invisible"
+            app:backgroundTint="@android:color/holo_red_dark"
+            app:fabSize="mini" />
+
+        <android.support.design.widget.FloatingActionButton
             android:id="@+id/btn_speak"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

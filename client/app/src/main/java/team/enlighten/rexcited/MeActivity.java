@@ -2,6 +2,7 @@ package team.enlighten.rexcited;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
@@ -87,17 +88,21 @@ public class MeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        final Handler handler = new Handler();
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     final Score score = new Score();
                     final int count = HttpHandler.getInstance().GetOverview(score);
-                    txtCount.post(new Runnable() {
+                    handler.post(new Runnable() {
                         @Override
                         public void run() {
                             txtCount.setText(Integer.toString(count));
-                            txtLastRate.setText(Integer.toString((int) (score.Score / count)));
+                            if (count == 0)
+                                txtLastRate.setText(Integer.toString(0));
+                            else
+                                txtLastRate.setText(Integer.toString((int) (score.Score / count)));
                         }
                     });
                     data.clear();
@@ -109,7 +114,7 @@ public class MeActivity extends AppCompatActivity {
                         map.put("article", article);
                         data.add(map);
                     }
-                    activityList.post(new Runnable() {
+                    handler.post(new Runnable() {
                         @Override
                         public void run() {
                             adapter.notifyDataSetChanged();

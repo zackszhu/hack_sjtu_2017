@@ -244,12 +244,14 @@ public class NlpClient {
                 temp.append(s.charAt(i));
             } else {
 
-                if (temp.length() > 0 && (keySet == null || keySet.contains(temp.toString()))) {
-                    JSONObject jsonObject = new JSONObject();
-                    jsonObject.put("str", temp.toString());
-                    jsonObject.put("from", prePos);
-                    jsonObject.put("to", i - 1);
-                    result.put(jsonObject);
+                if (temp.length() > 0) {
+                    if (keySet == null || keySet.contains(temp.toString())) {
+                        JSONObject jsonObject = new JSONObject();
+                        jsonObject.put("str", temp.toString());
+                        jsonObject.put("from", prePos);
+                        jsonObject.put("to", i - 1);
+                        result.put(jsonObject);
+                    }
                     prePos = i;
                 }
                 temp.setLength(0);

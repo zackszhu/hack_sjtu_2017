@@ -16,7 +16,7 @@ import android.widget.Button;
 public class TabImport extends Fragment {
     Button btnText;
     Button btnOcr;
-    public String type;
+    public String type = "article";
 
     @Nullable
     @Override

@@ -352,7 +352,7 @@ public class LiuLiShuo {
         }
     }
 
-    public void startScore(final String reftext) throws IOException {
+    public void startScore(final String reftext) throws IOException, InterruptedException {
         synchronized (this) {
             if (score_ws != null)
                 return;
@@ -388,6 +388,7 @@ public class LiuLiShuo {
                     }
                     recorder_thread.wss.add(score_ws);
                 }
+                Log.d("Score", "connected");
             }
 
             @Override
@@ -568,6 +569,13 @@ public class LiuLiShuo {
                 }
             }
         }).start();
+        for (; ; ) {
+            synchronized (this) {
+                if (recorder_thread != null && recorder_thread.wss.contains(score_ws))
+                    return;
+            }
+            Thread.sleep(100, 0);
+        }
     }
 
     public JSONObject stopScore() throws InterruptedException {

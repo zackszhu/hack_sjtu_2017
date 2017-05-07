@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.constraint.ConstraintSet;
@@ -39,7 +38,7 @@ public class TestActivity extends AppCompatActivity {
     ListView chat;
     ProgressBar progress;
     Article article;
-    FloatingActionButton btnSpeak;
+    FloatingActionButton btnSpeak, btnStop;
     LiuLiShuo liuLiShuo;
     Robot robot;
     AtomicBoolean reciting = new AtomicBoolean();
@@ -77,6 +76,7 @@ public class TestActivity extends AppCompatActivity {
         chat = (ListView) findViewById(R.id.chat_list);
         progress = (ProgressBar) findViewById(R.id.chat_progress);
         btnSpeak = (FloatingActionButton) findViewById(R.id.btn_speak);
+        btnStop = (FloatingActionButton) findViewById(R.id.btn_stop);
 
         data = new ArrayList<Map<String, Object>>();
 
@@ -132,25 +132,19 @@ public class TestActivity extends AppCompatActivity {
         reciting.set(false);
         liuLiShuo = new LiuLiShuo(getApplicationContext());
         robot = new Robot();
-        final Handler handler = new Handler(new Handler.Callback() {
-            @Override
-            public boolean handleMessage(Message msg) {
-                Map<String, Object> map = new HashMap<String, Object>();
-                map.put("text", "other:" + msg.getData().getString("msg"));
-                data.add(map);
-                adapter.notifyDataSetChanged();
-                return true;
-            }
-        });
+        final Handler handler = new Handler();
         robot.setSpeaker(new Robot.Speaker() {
             @Override
-            public void speak(String msg) {
-                Message handlerMsg = new Message();
-                handlerMsg.what = 0;
-                Bundle data = new Bundle();
-                data.putString("msg", msg);
-                handlerMsg.setData(data);
-                handler.sendMessage(handlerMsg);
+            public void speak(final String msg) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Map<String, Object> map = new HashMap<String, Object>();
+                        map.put("text", "other:" + msg);
+                        data.add(map);
+                        adapter.notifyDataSetChanged();
+                    }
+                });
             }
 
             @Override
@@ -176,63 +170,89 @@ public class TestActivity extends AppCompatActivity {
         });
         robot.sendArticle(article);
 
-        progress.setOnClickListener(new View.OnClickListener() {
+        btnStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                progress.setEnabled(false);
-                synchronized (robot) {
-                    try {
-                        Log.d("Robot", "got " + (reciting.get() ? "recite" : "message"));
-                        if (reciting.get())
-                            score = liuLiShuo.stopScore();
-                        String msg = liuLiShuo.stopRecongition();
-                        if (msg != null && msg.length() != 0) {
-                            Map<String, Object> map = new HashMap<String, Object>();
-                            map.put("text", "me:" + msg);
-                            data.add(map);
-                            adapter.notifyDataSetChanged();
-                            boolean _reciting = reciting.get();
-                            reciting.set(false);
-                            if (_reciting)
-                                robot.sendReciteText(msg);
-                            else
-                                robot.sendMsg(msg);
+                btnStop.setVisibility(View.INVISIBLE);
+                progress.setVisibility(View.VISIBLE);
+                progress.bringToFront();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            if (reciting.get())
+                                score = liuLiShuo.stopScore();
+                            String msg = liuLiShuo.stopRecongition();
+                            if (msg != null && msg.length() != 0) {
+                                Map<String, Object> map = new HashMap<String, Object>();
+                                map.put("text", "me:" + msg);
+                                data.add(map);
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                });
+                                boolean _reciting = reciting.get();
+                                reciting.set(false);
+                                if (_reciting)
+                                    robot.sendReciteText(msg);
+                                else
+                                    robot.sendMsg(msg);
+                            }
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    btnSpeak.setVisibility(View.VISIBLE);
+                                    progress.setVisibility(View.INVISIBLE);
+                                    btnSpeak.bringToFront();
+                                }
+                            });
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
                     }
-                }
-                btnSpeak.setVisibility(View.VISIBLE);
-                btnSpeak.setEnabled(true);
-                progress.setVisibility(View.INVISIBLE);
-                btnSpeak.bringToFront();
+                }).start();
             }
         });
         btnSpeak.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                btnSpeak.setEnabled(false);
-                synchronized (robot) {
-                    Log.d("User", "I'm " + (reciting.get() ? "reciting" : "speaking"));
-                    try {
-                        if (reciting.get())
-                            liuLiShuo.startScore(reftext);
-                        liuLiShuo.startRecongition();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
                 btnSpeak.setVisibility(View.INVISIBLE);
                 progress.setVisibility(View.VISIBLE);
-                progress.setEnabled(true);
                 progress.bringToFront();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            if (reciting.get())
+                                liuLiShuo.startScore(reftext);
+                            liuLiShuo.startRecongition();
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    btnStop.setVisibility(View.VISIBLE);
+                                    progress.setVisibility(View.INVISIBLE);
+                                    btnStop.bringToFront();
+                                }
+                            });
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }).start();
             }
         });
 
+        btnStop.setVisibility(View.INVISIBLE);
+        progress.setVisibility(View.INVISIBLE);
+        btnSpeak.setVisibility(View.VISIBLE);
+        btnSpeak.bringToFront();
         btnSpeak.setEnabled(false);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{

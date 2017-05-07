@@ -1,6 +1,7 @@
 package team.enlighten.rexcited;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
@@ -62,6 +63,7 @@ public class ReportActivity extends AppCompatActivity {
         btnUpload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                final Handler handler = new Handler();
                 try {
                     JSONObject result = new JSONObject(liulishuoResult);
                     final Score score = new Score(result.getInt("overall"), result.getInt("fluency"), result.getInt("integrity"), article);
@@ -70,7 +72,7 @@ public class ReportActivity extends AppCompatActivity {
                         public void run() {
                             try {
                                 HttpHandler.getInstance().PostTask(article.id, TextParser.EArticleType.Article, score);
-                                btnUpload.post(new Runnable() {
+                                handler.post(new Runnable() {
                                     @Override
                                     public void run() {
                                         Toast.makeText(getApplicationContext(), "Upload success", Toast.LENGTH_SHORT).show();

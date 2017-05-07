@@ -2,6 +2,7 @@ package team.enlighten.rexcited;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -39,6 +40,7 @@ public class LoginActivity extends AppCompatActivity {
                     return;
                 }
                 btnLogin.setEnabled(false);
+                final Handler handler = new Handler();
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -48,9 +50,14 @@ public class LoginActivity extends AppCompatActivity {
                             intent.putExtra("nickname", login_username.getText().toString());
                             startActivity(intent);
                             finish();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            btnLogin.setEnabled(true);
+                        } catch (final Exception e) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    btnLogin.setEnabled(true);
+                                }
+                            });
                         }
                     }
                 }).start();
@@ -59,8 +66,46 @@ public class LoginActivity extends AppCompatActivity {
         btnCreate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), RegisterActivity.class);
-                startActivity(intent);
+                if (login_username.getText().toString().length() == 0) {
+                    Toast.makeText(getApplicationContext(), "Please input username", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (login_password.getText().toString().length() == 0) {
+                    Toast.makeText(getApplicationContext(), "Please input password", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                btnCreate.setEnabled(false);
+                final String username = login_username.getText().toString();
+                final String password = login_password.getText().toString();
+                final Handler handler = new Handler();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            HttpHandler.getInstance().Register(username, password, username);
+                            HttpHandler.getInstance().Login(username, password);
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(), "Create success", Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(getApplicationContext(), MeActivity.class);
+                                    intent.putExtra("nickname", username);
+                                    startActivity(intent);
+                                    finish();
+                                }
+                            });
+                        } catch (final Exception e) {
+                            e.printStackTrace();
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    btnCreate.setEnabled(true);
+                                }
+                            });
+                        }
+                    }
+                }).start();
             }
         });
     }

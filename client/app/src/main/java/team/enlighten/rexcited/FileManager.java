@@ -18,14 +18,10 @@ public class FileManager {
 
     public List<Article> articles = null;
 
-    public synchronized void fetchArticle() {
+    public synchronized void fetchArticle() throws Exception {
         if (articles != null)
             return;
-        try {
-            articles = HttpHandler.getInstance().GetAllArticle(0, 10);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        articles = HttpHandler.getInstance().GetAllArticle(0, 10);
     }
 
     public synchronized void postArticle(Article article, TextParser.EArticleType type, TextParser.EArticlePerm perm) throws Exception {

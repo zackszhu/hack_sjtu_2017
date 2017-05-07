@@ -2,6 +2,7 @@ package team.enlighten.rexcited;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -10,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,7 +28,7 @@ public class TabAllFiles extends Fragment {
     ListView list;
     SimpleAdapter adapter;
     List<Map<String, Object>> data;
-    public String type;
+    public String type = "article";
 
     @Nullable
     @Override
@@ -37,10 +39,23 @@ public class TabAllFiles extends Fragment {
 
         data = new ArrayList<Map<String, Object>>();
 
+        final Handler handler = new Handler();
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                FileManager.getInstance().fetchArticle();
+                try {
+                    FileManager.getInstance().fetchArticle();
+                } catch (final Exception e) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                            data.clear();
+                            adapter.notifyDataSetChanged();
+                        }
+                    });
+                    return;
+                }
                 data.clear();
                 for (Article article : FileManager.getInstance().articles) {
                     Map<String, Object> map = new HashMap<String, Object>();
@@ -49,7 +64,7 @@ public class TabAllFiles extends Fragment {
                     map.put("desc", article.toString().substring(article.Title.length() + 1));
                     data.add(map);
                 }
-                list.post(new Runnable() {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         adapter.notifyDataSetChanged();
