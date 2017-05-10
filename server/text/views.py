@@ -8,6 +8,8 @@ from django.http import HttpRequest
 from text.models import *
 from main.models import *
 
+import sys
+
 import json, re
 
 def articleUpload(request):
@@ -231,6 +233,14 @@ def add_score(score1, score2):
     score["score"] = s1.get("score", 0) + s2["score"]
     return json.dumps(score)
     
+def set_zero(score):
+    sys.stderr.write(score)
+    arr = json.loads(score)
+    for i in arr["paragraphs"]:
+        i["score"]["score"] = 0.0
+        i["score"]["accuracy"] = 0.0
+        i["score"]["frequency"] = 0.0
+    return json.dumps(arr)
 def doTask(request):
     if request.session.get("id", None) == None:
         return HttpResponse(json.dumps({"status": "error", "msg": "login first"}))
@@ -253,7 +263,14 @@ def doTask(request):
             history = History.objects.get(user_id = id, article_id = content_id)
         except Exception, e:
             print Exception, e
-            return HttpResponse(json.dumps({"status": "error", "msg": "no such history"}))
+            temp = History.objects.filter(article_id = content_id)[0]
+            history = History(user_id=id, \
+                article_id = content_id, \
+                article_title = temp.article_title, \
+                type = 0, \
+                score = set_zero(temp.score)\
+            )
+            # return HttpResponse(json.dumps({"status": "error", "msg": "no such history"}))
         task = Task(type = 0, content_id = content_id, score = score, user_id = id)
         task.save()
         old_score = json.loads(history.score)
